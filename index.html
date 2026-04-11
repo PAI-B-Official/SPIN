@@ -107,7 +107,7 @@
         <div id="grid-view" class="hidden w-full transition-all duration-300 flex flex-col items-center justify-center pt-6 xl:pt-12 pb-2 relative">
 
             <p id="grid-title" class="text-emerald-600 dark:text-emerald-500 font-bold mb-4 xl:mb-8 text-xs sm:text-sm md:text-base xl:text-2xl tracking-[0.2em] uppercase animate-pulse">Mari Tentukan Pilihan</p>
-            <div id="grid-container" class="flex overflow-x-auto gap-4 sm:gap-6 xl:gap-10 w-full max-w-full px-8 pb-10 xl:pb-16 pt-4 xl:pt-8 hide-scrollbar snap-x snap-mandatory items-start cursor-grab" style="scroll-behavior: smooth;">
+            <div id="grid-container" class="flex overflow-x-auto gap-4 sm:gap-6 md:gap-8 lg:gap-12 xl:gap-16 w-full max-w-full px-8 pb-10 xl:pb-16 pt-4 xl:pt-8 hide-scrollbar snap-x snap-mandatory items-start cursor-grab" style="scroll-behavior: smooth;">
                 <!-- Kartu peserta akan digenerate disini memanjang ke samping -->
             </div>
         </div>
@@ -374,17 +374,17 @@
 
             let bgHTML = p.image 
                 ? `<img src="${p.image}" class="absolute inset-0 w-full h-full object-cover" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNhMGEwYTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSIzIiB5PSIzIiB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHJ4PSIyIiByeT0iMiI+PC9yZWN0PjxjaXJjbGUgY3g9IjguNSIgY3k9IjguNSIgcj0iMS41Ij48L2NpcmNsZT48cG9seWxpbmUgcG9pbnRzPSIyMSAxNSAxNiAxMCA1IDIxIj48L3BvbHlsaW5lPjwvc3ZnPg=='" />`
-                : `<div class="absolute inset-0 w-full h-full ${baseColor} opacity-90 flex items-center justify-center"><span class="text-5xl md:text-7xl xl:text-9xl font-black text-white/50 uppercase">${p.name.charAt(0)}</span></div>`;
+                : `<div class="absolute inset-0 w-full h-full ${baseColor} opacity-90 flex items-center justify-center"><span class="text-6xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[10rem] 2xl:text-[12rem] font-black text-white/50 uppercase">${p.name.charAt(0)}</span></div>`;
 
-            // Ukuran Base dinamis menyesuaikan lebar layar (HP:120px -> Tablet:160px -> PC:220px -> TV:300px)
+            // Ukuran Base dinamis menyesuaikan lebar layar
             return `
-                <div id="participant-card-${globalIndex}" data-original-index="${originalIndex}" class="participant-card-item flex flex-col items-center shrink-0 snap-center transition-all duration-200 ${styleClass} w-[120px] sm:w-[140px] md:w-[180px] lg:w-[220px] xl:w-[260px] 2xl:w-[320px]" style="${inlineStyle}">
+                <div id="participant-card-${globalIndex}" data-original-index="${originalIndex}" class="participant-card-item flex flex-col items-center shrink-0 snap-center transition-all duration-200 ${styleClass} w-[140px] sm:w-[170px] md:w-[220px] lg:w-[280px] xl:w-[340px] 2xl:w-[420px]" style="${inlineStyle}">
                     <div class="inner-card-wrapper relative w-full aspect-[3/4] rounded-2xl xl:rounded-3xl overflow-hidden shadow-md border-2 xl:border-4 border-white/60 dark:border-slate-600 bg-white dark:bg-slate-800 transition-all duration-300">
                         ${bgHTML}
                     </div>
-                    <div class="mt-4 xl:mt-8 flex flex-col items-center w-full text-center px-1">
-                        <span class="font-bold text-gray-800 dark:text-gray-100 text-[15px] sm:text-base md:text-xl xl:text-3xl truncate w-full drop-shadow-sm">${p.name}</span>
-                        <span class="text-xs sm:text-sm md:text-base xl:text-2xl font-bold text-emerald-600 dark:text-emerald-400/80 truncate w-full mt-0.5 xl:mt-2 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 xl:px-4 xl:py-1.5 rounded-full inline-block max-w-max mx-auto">${p.nim || '-'}</span>
+                    <div class="mt-4 xl:mt-8 flex flex-col items-center w-full text-center px-1 md:px-2">
+                        <span class="font-bold text-gray-800 dark:text-gray-100 text-base sm:text-lg md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl truncate w-full drop-shadow-sm">${p.name}</span>
+                        <span class="text-xs sm:text-sm md:text-lg lg:text-xl xl:text-3xl 2xl:text-4xl font-bold text-emerald-600 dark:text-emerald-400/80 truncate w-full mt-1 xl:mt-3 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1 md:px-4 md:py-1.5 xl:px-6 xl:py-2 rounded-full inline-block max-w-max mx-auto">${p.nim || '-'}</span>
                     </div>
                 </div>
             `;
