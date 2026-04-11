@@ -235,8 +235,12 @@
         function playTickSound() {
             // Abaikan pemutaran jika Anda belum mengganti link default di atas
             if (TICK_SOUND_URL.includes("URL_SUARA")) return;
-            tickAudio.currentTime = 0; // Me-reset suara ke detik ke-0 (membuatnya bisa diputar beruntun dengan cepat)
-            tickAudio.play().catch(() => {});
+            
+            // Menggunakan teknik cloneNode agar audio bisa diputar secara tumpang tindih (overlap)
+            // tanpa membatalkan pemutaran sebelumnya. Ini mengatasi masalah suara "bisu" saat putaran sangat cepat.
+            const soundClone = tickAudio.cloneNode();
+            soundClone.volume = 0.5; // Volume sedikit diturunkan agar tidak pecah saat bertumpuk puluhan kali
+            soundClone.play().catch(() => {});
         }
 
         function playWinSound() {
