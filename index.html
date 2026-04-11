@@ -100,7 +100,7 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p class="text-emerald-700 dark:text-emerald-300 font-medium animate-pulse">Menghubungkan ke database...</p>
+            <p class="text-emerald-700 dark:text-emerald-300 font-medium animate-pulse">Sabar Yaa Bubub :3</p>
         </div>
 
         <!-- TAMPILAN IDLE / GRID SPIN (Semua Peserta ala Hero Selection) -->
@@ -235,12 +235,8 @@
         function playTickSound() {
             // Abaikan pemutaran jika Anda belum mengganti link default di atas
             if (TICK_SOUND_URL.includes("URL_SUARA")) return;
-            
-            // Menggunakan teknik cloneNode agar audio bisa diputar secara tumpang tindih (overlap)
-            // tanpa membatalkan pemutaran sebelumnya. Ini mengatasi masalah suara "bisu" saat putaran sangat cepat.
-            const soundClone = tickAudio.cloneNode();
-            soundClone.volume = 0.5; // Volume sedikit diturunkan agar tidak pecah saat bertumpuk puluhan kali
-            soundClone.play().catch(() => {});
+            tickAudio.currentTime = 0; // Me-reset suara ke detik ke-0 (membuatnya bisa diputar beruntun dengan cepat)
+            tickAudio.play().catch(() => {});
         }
 
         function playWinSound() {
