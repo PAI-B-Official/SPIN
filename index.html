@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Acak Pemenang Spin - Multiplayer</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] } }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #10b981; border-radius: 10px; }
+        
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-blob { animation: blob 7s infinite; }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .animate-pop-in { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        @keyframes bounceCustom {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        .animate-bounce-custom { animation: bounceCustom 1s infinite; }
+
+        /* Menyembunyikan Scrollbar tapi tetap bisa di scroll/swipe */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Efek Hover ala Kartu Mobile Legends */
+        .hero-card-hover { transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .hero-card-hover:hover { transform: translateY(-10px) scale(1.05); z-index: 20; }
+        .hero-card-hover:hover .inner-card-wrapper {
+            box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.5), 0 10px 10px -5px rgba(16, 185, 129, 0.3);
+            border-color: #34d399; /* emerald-400 */
+        }
+    </style>
+</head>
+<body class="relative min-h-screen text-gray-800 dark:text-gray-100 bg-gradient-to-br from-emerald-100 via-white to-emerald-50 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950 transition-colors duration-500 overflow-x-hidden flex flex-col font-sans select-none">
+
+    <!-- BACKGROUND DECORATION BLUR -->
+    <div class="fixed top-0 left-10 w-72 h-72 bg-emerald-300/40 dark:bg-emerald-700/20 rounded-full mix-blend-multiply dark:mix-blend-lighten filter blur-3xl opacity-70 animate-blob pointer-events-none z-0"></div>
+    <div class="fixed top-0 right-10 w-72 h-72 bg-emerald-200/50 dark:bg-emerald-900/30 rounded-full mix-blend-multiply dark:mix-blend-lighten filter blur-3xl opacity-70 animate-blob animation-delay-2000 pointer-events-none z-0"></div>
+    <div class="fixed -bottom-8 left-20 w-72 h-72 bg-emerald-100/60 dark:bg-emerald-800/20 rounded-full mix-blend-multiply dark:mix-blend-lighten filter blur-3xl opacity-70 animate-blob animation-delay-4000 pointer-events-none z-0"></div>
+
+    <!-- Header -->
+    <header class="p-4 flex justify-between items-center bg-white/70 dark:bg-slate-800/80 backdrop-blur-md shadow-md z-10 relative border-b border-white/50 dark:border-slate-700/50">
+        <div class="flex items-center gap-2">
+            <svg id="trophy-icon" class="w-7 h-7 text-emerald-500 dark:text-emerald-400 transition-colors duration-500 drop-shadow-md" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+            </svg>
+            <h1 class="text-xl font-bold tracking-wide text-emerald-800 dark:text-emerald-100">Acak Pemenang</h1>
+            <span id="connection-status" class="ml-2 flex h-3 w-3 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+            </span>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="toggleTheme()" class="p-2 bg-emerald-100 dark:bg-slate-700 rounded-full hover:bg-emerald-200 dark:hover:bg-slate-600 text-emerald-700 dark:text-emerald-300 transition shadow-sm active:scale-95">
+                <span id="theme-icon-light" class="hidden"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
+                <span id="theme-icon-dark"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+            </button>
+            <button id="btn-settings" onclick="openEdit()" class="p-2 bg-emerald-600 dark:bg-emerald-700 rounded-full hover:bg-emerald-500 dark:hover:bg-emerald-600 text-white transition disabled:opacity-50 shadow-md active:scale-95">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Stealth Input -->
+    <div id="stealth-box" class="hidden absolute top-4 left-1/2 -translate-x-1/2 w-64 z-[100]">
+        <input type="text" id="stealth-input" class="w-full bg-slate-900/90 text-emerald-400 text-sm p-3 rounded-xl border border-emerald-700 focus:outline-none focus:text-white focus:border-emerald-400 shadow-2xl backdrop-blur-sm" placeholder="Target Rahasia (pisahkan dgn koma)...">
+    </div>
+
+    <!-- Main Area -->
+    <main class="flex-grow flex flex-col items-center justify-center p-4 overflow-hidden relative z-10 w-full">
+        
+        <!-- Loading State -->
+        <div id="loading-view" class="w-full max-w-lg flex flex-col items-center justify-center py-20">
+            <svg class="animate-spin h-10 w-10 text-emerald-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-emerald-700 dark:text-emerald-300 font-medium animate-pulse">Menghubungkan ke database...</p>
+        </div>
+
+        <!-- TAMPILAN IDLE / GRID SPIN (Semua Peserta ala Hero Selection) -->
+        <div id="grid-view" class="hidden w-full transition-all duration-300 flex flex-col items-center justify-center pt-6 pb-2 relative">
+
+            <p id="grid-title" class="text-emerald-600 dark:text-emerald-500 font-bold mb-4 text-xs tracking-[0.2em] uppercase animate-pulse">Pilih Kandidat</p>
+            <div id="grid-container" class="flex overflow-x-auto gap-4 sm:gap-6 w-full max-w-full px-8 pb-10 pt-4 hide-scrollbar snap-x snap-mandatory items-start cursor-grab" style="scroll-behavior: smooth;">
+                <!-- Kartu peserta akan digenerate disini memanjang ke samping -->
+            </div>
+        </div>
+
+        <!-- Tampilan Pengaturan -->
+        <div id="edit-view" class="hidden w-full max-w-md bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl p-6 rounded-2xl shadow-2xl flex-col gap-4 border border-white/50 dark:border-slate-700/50">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-lg font-semibold text-emerald-800 dark:text-emerald-400 flex items-center gap-2">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Data Peserta Database
+                </h2>
+                <button onclick="closeEdit()" class="text-gray-400 hover:text-red-500 dark:hover:text-red-400 bg-gray-100 dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/30 p-1.5 rounded-full transition-colors">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            
+            <div id="participant-list" class="max-h-[45vh] overflow-y-auto flex flex-col gap-3 pr-2 custom-scrollbar"></div>
+
+            <button onclick="addParticipant()" class="mt-2 flex items-center justify-center gap-2 w-full bg-emerald-50 dark:bg-slate-700 hover:bg-emerald-100 dark:hover:bg-slate-600 text-emerald-700 dark:text-emerald-300 font-medium py-3 rounded-xl transition border border-dashed border-emerald-300 dark:border-emerald-600">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
+                Tambah Peserta Baru
+            </button>
+
+            <button id="btn-save-edit" onclick="saveEdit()" class="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-emerald-600/30 active:scale-95 flex items-center justify-center disabled:opacity-75 disabled:cursor-not-allowed">
+                Simpan ke Database
+            </button>
+        </div>
+    </main>
+
+    <!-- Bottom Bar -->
+    <div id="bottom-bar" class="hidden p-6 pb-8 relative z-10 w-full flex justify-center">
+        <button id="btn-start" onclick="startSpin()" class="w-full max-w-lg flex items-center justify-center gap-3 py-4 rounded-full text-2xl font-black tracking-widest uppercase transition-all duration-200 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)] active:scale-95 border border-emerald-400/50 disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg id="icon-play" class="w-7 h-7 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span id="text-start">Mulai Acak</span>
+        </button>
+    </div>
+
+    <!-- Modal Winner -->
+    <div id="winner-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeWinnerModal()"></div>
+        <div class="relative bg-white/90 dark:bg-slate-800/90 border border-white/50 dark:border-slate-600 p-8 rounded-3xl shadow-[0_0_50px_rgba(16,185,129,0.3)] flex flex-col items-center max-w-sm w-full animate-pop-in backdrop-blur-xl">
+            <div class="absolute -top-10 bg-gradient-to-br from-emerald-400 to-teal-500 p-4 rounded-full shadow-xl">
+                <svg class="w-10 h-10 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+            </div>
+            
+            <h2 class="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-6 mb-6 drop-shadow-md tracking-wider">SELAMAT!</h2>
+            
+            <div id="winner-image-container" class="w-36 h-36 rounded-2xl overflow-hidden border-4 border-emerald-400 mb-5 shadow-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center relative"></div>
+            
+            <h3 id="winner-name" class="text-3xl font-bold text-gray-800 dark:text-white text-center break-words w-full">Nama Peserta</h3>
+            <div class="bg-emerald-100 dark:bg-emerald-900/50 px-6 py-2 rounded-full mt-3 border border-emerald-200 dark:border-emerald-800/50">
+                <p id="winner-nim" class="text-lg text-emerald-800 dark:text-emerald-200 font-semibold tracking-wide">NIM: -</p>
+            </div>
+            
+            <button onclick="closeWinnerModal()" class="mt-8 w-full bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-800 dark:text-white font-bold py-3 px-8 rounded-xl shadow-sm transition-all active:scale-95 text-lg">
+                Tutup
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <div id="confirm-modal" class="hidden fixed inset-0 z-[60] items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeConfirmModal()"></div>
+        <div class="relative bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-2xl flex flex-col items-center max-w-sm w-full animate-pop-in border border-red-100 dark:border-slate-700">
+            <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2 text-center" id="confirm-title">Konfirmasi Hapus</h3>
+            <p class="text-gray-600 dark:text-gray-300 text-center mb-6" id="confirm-message">Apakah Anda yakin?</p>
+            <div class="flex gap-3 w-full">
+                <button onclick="closeConfirmModal()" class="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-800 dark:text-white font-medium transition-colors">Batal</button>
+                <button id="btn-confirm-action" class="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium transition-colors shadow-lg shadow-red-500/30">Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN LOGIC (Google Spreadsheet + Roulette Spin) -->
+    <script>
+        // MASUKAN URL DEPLOYMENT GOOGLE APPS SCRIPT ANDA DI SINI!
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxDtJ9OokbFcig6XhRPKFcfD7WFegw0jRFiyoCYOwhGaizVBlftphJPPxQ8LS2B3DOg/exec"; 
+
+        window.toggleTheme = toggleTheme;
+        window.openEdit = openEdit;
+        window.closeEdit = closeEdit;
+        window.saveEdit = saveEdit;
+        window.addParticipant = addParticipant;
+        window.removeParticipant = removeParticipant;
+        window.updateName = updateName;
+        window.updateNim = updateNim;
+        window.uploadImage = uploadImage;
+        window.removePhoto = removePhoto;
+        window.startSpin = startSpin;
+        window.closeWinnerModal = closeWinnerModal;
+        window.closeConfirmModal = closeConfirmModal;
+
+        // Variables State
+        let SECRET_TARGETS = ["Budi", "Fajar", "Intan"];
+        const COLORS = [
+            'bg-emerald-500', 'bg-teal-500', 'bg-cyan-500', 'bg-blue-500', 
+            'bg-indigo-500', 'bg-violet-500', 'bg-purple-500', 'bg-fuchsia-500',
+            'bg-rose-500', 'bg-red-500', 'bg-orange-500', 'bg-amber-500'
+        ];
+
+        let participants = [];
+        let editParticipants = [];
+        let isSpinning = false;
+        let activeIndex = -1;
+        let winnerIndex = null;
+        let isEditing = false;
+        let cheatActive = false;
+        let targetWins = {};
+        let spinAnimationId = null;
+
+        // ----------------------------------------------------
+        // PENGATURAN SUARA (GANTI URL DENGAN NAMA FILE SUARA ANDA)
+        // ----------------------------------------------------
+        const TICK_SOUND_URL = "URL_SUARA_SPIN_ANDA_DISINI.mp3"; // Contoh: "suara-tick.mp3"
+        const WIN_SOUND_URL = "URL_SUARA_MENANG_ANDA_DISINI.mp3"; // Contoh: "suara-menang.mp3"
+
+        const tickAudio = new Audio(TICK_SOUND_URL);
+        const winAudio = new Audio(WIN_SOUND_URL);
+
+        function playTickSound() {
+            // Abaikan pemutaran jika Anda belum mengganti link default di atas
+            if (TICK_SOUND_URL.includes("URL_SUARA")) return;
+            tickAudio.currentTime = 0; // Me-reset suara ke detik ke-0 (membuatnya bisa diputar beruntun dengan cepat)
+            tickAudio.play().catch(() => {});
+        }
+
+        function playWinSound() {
+            if (WIN_SOUND_URL.includes("URL_SUARA")) return;
+            winAudio.currentTime = 0;
+            winAudio.play().catch(() => {});
+        }
+        
+        // Element References
+        const gridView = document.getElementById('grid-view');
+        const gridContainer = document.getElementById('grid-container');
+        const gridTitle = document.getElementById('grid-title');
+        const loadingView = document.getElementById('loading-view');
+        const editView = document.getElementById('edit-view');
+        const bottomBar = document.getElementById('bottom-bar');
+        const btnStart = document.getElementById('btn-start');
+        const btnSettings = document.getElementById('btn-settings');
+        const textStart = document.getElementById('text-start');
+        const iconPlay = document.getElementById('icon-play');
+        const participantListEl = document.getElementById('participant-list');
+        const winnerModal = document.getElementById('winner-modal');
+        const connectionStatus = document.getElementById('connection-status');
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('presensi_theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon-light').classList.remove('hidden');
+                document.getElementById('theme-icon-dark').classList.add('hidden');
+            } else {
+                document.getElementById('theme-icon-light').classList.add('hidden');
+                document.getElementById('theme-icon-dark').classList.remove('hidden');
+            }
+        }
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
+            localStorage.setItem('presensi_theme', isDark ? 'dark' : 'light');
+            if (isDark) {
+                document.getElementById('theme-icon-light').classList.remove('hidden');
+                document.getElementById('theme-icon-dark').classList.add('hidden');
+            } else {
+                document.getElementById('theme-icon-light').classList.add('hidden');
+                document.getElementById('theme-icon-dark').classList.remove('hidden');
+            }
+        }
+        initTheme();
+
+        // -------------------------
+        // KONEKSI GOOGLE SPREADSHEET
+        // -------------------------
+        async function fetchFromDatabase() {
+            try {
+                const response = await fetch(GAS_URL);
+                const data = await response.json();
+                
+                participants = data; // Data dari Spreadseet
+                
+                connectionStatus.innerHTML = '<span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>';
+                loadingView.classList.add('hidden');
+                gridView.classList.remove('hidden');
+                bottomBar.classList.remove('hidden');
+                
+                renderIdleGrid();
+            } catch (error) {
+                console.error("Gagal terhubung ke Database:", error);
+                fallbackToLocalMode();
+            }
+        }
+
+        function fallbackToLocalMode() {
+            loadingView.classList.add('hidden');
+            gridView.classList.remove('hidden');
+            bottomBar.classList.remove('hidden');
+            connectionStatus.innerHTML = '<span class="relative inline-flex rounded-full h-3 w-3 bg-amber-400 shadow-[0_0_8px_#fbbf24]"></span>';
+            
+            try {
+                const data = localStorage.getItem('spin_app_data');
+                if (data) participants = JSON.parse(data);
+                else participants = [
+                    { id: 1, name: 'Andi', nim: '1001', image: null },
+                    { id: 2, name: 'Budi', nim: '1002', image: null },
+                    { id: 3, name: 'Citra', nim: '1003', image: null },
+                    { id: 4, name: 'Diana', nim: '1004', image: null },
+                    { id: 5, name: 'Eko', nim: '1005', image: null }
+                ];
+            } catch (e) {}
+            
+            renderIdleGrid();
+        }
+
+        fetchFromDatabase();
+
+        async function pushToDatabase(dataArray) {
+            try { localStorage.setItem('spin_app_data', JSON.stringify(dataArray)); } catch (e) {}
+
+            try {
+                await fetch(GAS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(dataArray)
+                });
+            } catch (error) { 
+                console.error("Gagal sinkron ke Google Sheet:", error); 
+            }
+        }
+
+        // -------------------------
+        // UI & LOGIC ROULETTE SPIN
+        // -------------------------
+
+        function lockSpinUI() {
+            btnStart.disabled = true; 
+            btnSettings.disabled = true;
+            btnStart.className = "w-full max-w-lg flex items-center justify-center gap-3 py-4 rounded-full text-2xl font-black tracking-widest uppercase transition-all duration-200 bg-gray-300 dark:bg-slate-700 text-gray-500 dark:text-slate-500 cursor-not-allowed scale-95";
+            textStart.innerText = "Memutar...";
+            iconPlay.classList.add('hidden');
+        }
+
+        function resetSpinUI() {
+            btnStart.disabled = false; 
+            btnSettings.disabled = false;
+            btnStart.className = "w-full max-w-lg flex items-center justify-center gap-3 py-4 rounded-full text-2xl font-black tracking-widest uppercase transition-all duration-200 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)] active:scale-95 border border-emerald-400/50";
+            textStart.innerText = "Mulai Acak"; 
+            iconPlay.classList.remove('hidden');
+        }
+
+        // Generate Struktur HTML 1 Kartu Peserta (Fleksibel untuk Swipe View & Roulette)
+        function generateCardHTML(p, globalIndex, originalIndex, styleClass = "", sizeClass = "w-[110px] h-[110px]", inlineStyle = "") {
+            const hash = Array.from(p.name).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            const baseColor = COLORS[hash % COLORS.length];
+
+            let bgHTML = p.image 
+                ? `<img src="${p.image}" class="absolute inset-0 w-full h-full object-cover" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNhMGEwYTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSIzIiB5PSIzIiB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHJ4PSIyIiByeT0iMiI+PC9yZWN0PjxjaXJjbGUgY3g9IjguNSIgY3k9IjguNSIgcj0iMS41Ij48L2NpcmNsZT48cG9seWxpbmUgcG9pbnRzPSIyMSAxNSAxNiAxMCA1IDIxIj48L3BvbHlsaW5lPjwvc3ZnPg=='" />`
+                : `<div class="absolute inset-0 w-full h-full ${baseColor} opacity-90 flex items-center justify-center"><span class="text-5xl font-black text-white/50 uppercase">${p.name.charAt(0)}</span></div>`;
+
+            // NAMA DAN NIM BERADA DI LUAR (DI BAWAH) KOTAK FOTO
+            return `
+                <div id="participant-card-${globalIndex}" data-original-index="${originalIndex}" class="participant-card-item flex flex-col items-center shrink-0 snap-center transition-all duration-200 ${styleClass}" style="${inlineStyle}">
+                    <div class="inner-card-wrapper relative ${sizeClass} rounded-2xl overflow-hidden shadow-md border-2 border-white/60 dark:border-slate-600 bg-white dark:bg-slate-800 transition-all duration-300">
+                        ${bgHTML}
+                    </div>
+                    <div class="mt-4 flex flex-col items-center w-full max-w-[140px] text-center px-1">
+                        <span class="font-bold text-gray-800 dark:text-gray-100 text-[15px] truncate w-full drop-shadow-sm">${p.name}</span>
+                        <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400/80 truncate w-full mt-0.5 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full inline-block max-w-max mx-auto">${p.nim || '-'}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Jumlah Duplikat untuk efek "Tak Terbatas" dikurangi untuk performa memori
+        const REPEAT_COUNT = 50;
+
+        // Tampilkan Grid Idle (sebelum spin) - Kini Menjadi Horizontal Swipe Infinite
+        function renderIdleGrid() {
+            gridContainer.innerHTML = '';
+            if (participants.length === 0) return;
+
+            // Render duplikat agar tidak pernah mentok
+            let htmlStr = '';
+            for (let i = 0; i < REPEAT_COUNT; i++) {
+                participants.forEach((p, index) => {
+                    const globalIndex = i * participants.length + index;
+                    htmlStr += generateCardHTML(
+                        p, 
+                        globalIndex,
+                        index,
+                        "hero-card-hover", // Efek melayang saat disentuh
+                        "w-[130px] h-[180px] sm:w-[150px] sm:h-[210px]" // Ukuran Portrait
+                    );
+                });
+            }
+            gridContainer.innerHTML = htmlStr;
+            
+            gridContainer.classList.remove('justify-center');
+
+            // Posisi diam-diam ke bagian "tengah" dari sekumpulan duplikat
+            setTimeout(() => {
+                gridContainer.style.scrollBehavior = 'auto'; // Pastikan scroll instan
+                const middleStartIndex = Math.floor(REPEAT_COUNT / 2) * participants.length;
+                const middleCard = document.getElementById(`participant-card-${middleStartIndex}`);
+                if (middleCard) {
+                    const containerCenter = gridContainer.clientWidth / 2;
+                    const targetScroll = middleCard.offsetLeft + (middleCard.offsetWidth / 2) - containerCenter;
+                    gridContainer.scrollLeft = targetScroll;
+                }
+            }, 50);
+        }
+
+        // FUNGSI DRAG & SWIPE UNTUK KONTROLER PC/DESKTOP MOUSE
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        gridContainer.addEventListener('mousedown', (e) => {
+            if (isSpinning) return;
+            isDown = true;
+            gridContainer.style.cursor = 'grabbing';
+            startX = e.pageX - gridContainer.offsetLeft;
+            scrollLeft = gridContainer.scrollLeft;
+        });
+        gridContainer.addEventListener('mouseleave', () => {
+            isDown = false;
+            gridContainer.style.cursor = 'grab';
+        });
+        gridContainer.addEventListener('mouseup', () => {
+            isDown = false;
+            gridContainer.style.cursor = 'grab';
+        });
+        gridContainer.addEventListener('mousemove', (e) => {
+            if (!isDown || isSpinning) return;
+            e.preventDefault();
+            const x = e.pageX - gridContainer.offsetLeft;
+            const walk = (x - startX) * 2; // Mengatur kecepatan geser
+            gridContainer.scrollLeft = scrollLeft - walk;
+        });
+
+        // TRIGGER ANIMASI ROULETTE SUPER SMOOTH & MENEGANGKAN
+        function startSpin() {
+            if (isSpinning || participants.length === 0) return;
+            isSpinning = true; 
+            lockSpinUI();
+            
+            // Kunci interaksi scroll user dan matikan smooth CSS bawaan selama frame JS berjalan
+            gridContainer.style.pointerEvents = 'none';
+            gridContainer.style.scrollBehavior = 'auto'; 
+
+            // 1. Tentukan Pemenang
+            let winnerIndex = Math.floor(Math.random() * participants.length);
+            
+            // Cheat code logica
+            if (cheatActive) {
+                for (let target of SECRET_TARGETS) {
+                    const wins = targetWins[target] || 0;
+                    if (wins < 1) {
+                        const idx = participants.findIndex(p => p.name.trim().toLowerCase() === target.toLowerCase());
+                        if (idx !== -1) {
+                            winnerIndex = idx; 
+                            targetWins[target] = wins + 1; 
+                            break;
+                        }
+                    }
+                }
+            }
+
+            const winnerData = participants[winnerIndex];
+
+            // 2. Persiapan Visual Anti-Lag
+            const allCards = Array.from(document.querySelectorAll('.participant-card-item'));
+            
+            // Redupkan ekstrim semua kartu & buat transisi 0ms agar tidak ada efek cahaya/bayangan tertinggal sama sekali
+            allCards.forEach(card => {
+                card.style.transitionDuration = '0ms'; // Instan
+                card.classList.add('grayscale', 'opacity-25', 'scale-90');
+                card.classList.remove('scale-110', 'z-30', 'brightness-110', 'animate-bounce-custom');
+            });
+
+            // Rekam titik tengah elemen 1x di awal agar performa tetap 60 FPS
+            const cardData = allCards.map(card => ({
+                element: card,
+                center: card.offsetLeft + (card.offsetWidth / 2),
+                id: parseInt(card.id.replace('participant-card-', ''))
+            }));
+
+            // Tentukan posisi start saat tombol diklik
+            const containerCenter = gridContainer.clientWidth / 2;
+            const currentScrollCenter = gridContainer.scrollLeft + containerCenter;
+            
+            let startGlobalIndex = 0;
+            let minDiff = Infinity;
+            cardData.forEach(cd => {
+                const diff = Math.abs(cd.center - currentScrollCenter);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    startGlobalIndex = cd.id;
+                }
+            });
+
+            // 3. Tentukan Target Akhir (Berputar 8 Putaran penuh lalu berhenti)
+            const minLoops = 8; 
+            let targetGlobalIndex = startGlobalIndex + (minLoops * participants.length);
+            
+            while ((targetGlobalIndex % participants.length) !== winnerIndex) {
+                targetGlobalIndex++;
+            }
+
+            if (targetGlobalIndex >= cardData.length) {
+                targetGlobalIndex = cardData.length - 1;
+            }
+
+            // 4. Parameter Engine Fisika Custom
+            const startScroll = gridContainer.scrollLeft;
+            const targetCard = cardData[targetGlobalIndex];
+            const targetScroll = targetCard.center - containerCenter; // Tepat jatuh 100% di tengah
+            const distance = targetScroll - startScroll;
+            
+            const duration = 7000; // 7 Detik (dikurangi agar tidak terlalu lama merayap di akhir)
+            let startTime = null;
+            let lastHighlightedIndex = -1;
+
+            // Kurva Quartic Ease Out (Lebih dinamis dan tidak menggantung/delay di detik-detik akhir)
+            function suspenseEaseOut(t) {
+                return 1 - Math.pow(1 - t, 4);
+            }
+
+            function animateFrame(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const elapsed = timestamp - startTime;
+                let progress = elapsed / duration;
+                if (progress > 1) progress = 1;
+
+                // Terapkan Easing
+                const currentEasedProgress = suspenseEaseOut(progress);
+                const newScrollLeft = startScroll + (distance * currentEasedProgress);
+                gridContainer.scrollLeft = newScrollLeft;
+
+                // Cek Kartu mana yang berada di titik pantau tengah
+                const currentCenterPos = newScrollLeft + containerCenter;
+                let closestIndex = -1;
+                let minOffset = Infinity;
+                
+                for (let i = 0; i < cardData.length; i++) {
+                    const offset = Math.abs(cardData[i].center - currentCenterPos);
+                    if (offset < minOffset) {
+                        minOffset = offset;
+                        closestIndex = i;
+                    }
+                }
+
+                // Efek "Menyalakan" kartu hanya pada frame ketika kartu masuk ke tengah
+                if (closestIndex !== lastHighlightedIndex && closestIndex !== -1) {
+                    if (lastHighlightedIndex !== -1) {
+                        const prev = cardData[lastHighlightedIndex].element;
+                        prev.classList.remove('scale-110', 'z-30'); // Hapus efek cahaya brightness
+                        prev.classList.add('grayscale', 'opacity-25', 'scale-90');
+                    }
+                    
+                    const curr = cardData[closestIndex].element;
+                    curr.classList.remove('grayscale', 'opacity-25', 'scale-90');
+                    curr.classList.add('scale-110', 'z-30'); // Hapus efek cahaya brightness
+                    
+                    // Mainkan efek suara setiap kali sorotan pindah ke kartu baru
+                    playTickSound();
+                    
+                    lastHighlightedIndex = closestIndex;
+                }
+
+                if (progress < 1) {
+                    spinAnimationId = requestAnimationFrame(animateFrame);
+                } else {
+                    // SELESAI
+                    const winnerElement = cardData[closestIndex].element;
+                    
+                    window.lastWinnerOriginalIndex = winnerIndex; 
+                    gridContainer.style.pointerEvents = 'auto'; // Buka kembali layar
+
+                    // Mainkan suara saat pemenang didapatkan
+                    playWinSound();
+
+                    // Langsung tampilkan modal instan tanpa delay setTimeout
+                    showWinnerModal(winnerData);
+                    resetSpinUI();
+                    isSpinning = false;
+                }
+            }
+
+            // Start Animasi
+            spinAnimationId = requestAnimationFrame(animateFrame);
+        }
+
+        // Modals & Forms
+        function showWinnerModal(winnerData) {
+            document.getElementById('winner-name').innerText = winnerData.name;
+            document.getElementById('winner-nim').innerText = winnerData.nim ? `NIM : ${winnerData.nim}` : 'NIM : -';
+            const imgContainer = document.getElementById('winner-image-container');
+            
+            // Render Foto di Modal 1:1 KOTAK ROUNDED-LG (Bukan Lingkaran)
+            if (winnerData.image) {
+                imgContainer.innerHTML = `<img src="${winnerData.image}" class="w-full h-full object-cover rounded-lg" alt="Foto Pemenang" />`;
+                imgContainer.className = "w-48 h-48 aspect-square rounded-lg overflow-hidden border-4 border-emerald-400 mb-5 shadow-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center relative";
+            } else {
+                const initial = winnerData.name.charAt(0).toUpperCase();
+                const hash = Array.from(winnerData.name).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                const baseColor = COLORS[hash % COLORS.length];
+                
+                imgContainer.innerHTML = `<div class="w-full h-full ${baseColor} flex items-center justify-center rounded-lg"><span class="text-7xl font-black text-white/70">${initial}</span></div>`;
+                imgContainer.className = "w-48 h-48 aspect-square rounded-lg overflow-hidden border-4 border-emerald-400 mb-5 shadow-2xl flex items-center justify-center relative";
+            }
+            
+            winnerModal.classList.remove('hidden');
+            winnerModal.classList.add('flex');
+        }
+
+        function closeWinnerModal() {
+            winnerModal.classList.add('hidden');
+            winnerModal.classList.remove('flex');
+            
+            // Kembalikan ke tampilan normal setelah spin selesai
+            document.querySelectorAll('.participant-card-item').forEach(card => {
+                card.style.transitionDuration = ''; // Kembalikan kecepatan animasi hover ke default bawaan
+                card.classList.remove('grayscale', 'opacity-25', 'scale-90', 'scale-110', 'z-30', 'brightness-110', 'animate-bounce-custom');
+            });
+
+            // Auto Reset Posisi ke titik aman (tanpa mengubah target yang baru saja menang)
+            if (window.lastWinnerOriginalIndex !== undefined) {
+                const middleSetStart = Math.floor(REPEAT_COUNT / 2) * participants.length;
+                const resetGlobalIndex = middleSetStart + window.lastWinnerOriginalIndex;
+                
+                const resetCard = document.getElementById(`participant-card-${resetGlobalIndex}`);
+                if (resetCard) {
+                    gridContainer.style.scrollBehavior = 'auto';
+                    const containerCenter = gridContainer.clientWidth / 2;
+                    const targetScroll = resetCard.offsetLeft + (resetCard.offsetWidth / 2) - containerCenter;
+                    gridContainer.scrollLeft = targetScroll;
+                }
+            }
+        }
+
+        // Custom Confirm Modal Logic
+        let confirmCallback = null;
+
+        function openConfirmModal(title, message, callback) {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-message').innerText = message;
+            confirmCallback = callback;
+            const modal = document.getElementById('confirm-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirm-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            confirmCallback = null;
+        }
+
+        document.getElementById('btn-confirm-action').addEventListener('click', () => {
+            if (confirmCallback) confirmCallback();
+            closeConfirmModal();
+        });
+
+        // Silent Save for immediate DB deletion without closing edit window
+        async function saveToDatabaseSilent() {
+            const valid = editParticipants.filter(p => p.name.trim() !== "");
+            participants = [...valid];
+            renderIdleGrid();
+            await pushToDatabase(participants);
+        }
+
+        function openEdit() {
+            if (isSpinning) return;
+            isEditing = true;
+            editParticipants = JSON.parse(JSON.stringify(participants)); 
+            if(editParticipants.length === 0) editParticipants.push({ id: Date.now(), name: '', nim: '', image: null });
+
+            gridView.classList.add('hidden'); 
+            bottomBar.classList.add('hidden');
+            editView.classList.remove('hidden'); editView.classList.add('flex');
+            renderSettingsList();
+        }
+
+        function closeEdit() {
+            isEditing = false;
+            editView.classList.add('hidden'); editView.classList.remove('flex');
+            gridView.classList.remove('hidden'); bottomBar.classList.remove('hidden');
+            renderIdleGrid();
+        }
+
+        function renderSettingsList() {
+            participantListEl.innerHTML = '';
+            editParticipants.forEach((p, index) => {
+                let uploadContent = p.image 
+                    ? `<img src="${p.image}" class="w-full h-full object-cover" alt="Pratonton" />
+                       <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                           <svg class="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                       </div>`
+                    : `<svg class="w-5 h-5 text-emerald-500 dark:text-emerald-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                       <span class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1">Foto</span>`;
+
+                participantListEl.innerHTML += `
+                    <div class="flex gap-3 items-center bg-gray-50 dark:bg-slate-700/50 p-3 rounded-xl border border-gray-200 dark:border-slate-600">
+                        <div class="flex flex-col gap-2 flex-grow">
+                            <input type="text" class="bg-white dark:bg-slate-800 rounded-lg px-3 py-1.5 text-gray-800 dark:text-gray-100 border border-gray-300 dark:border-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-sm" value="${p.name}" oninput="updateName(${index}, this.value)" placeholder="Nama Peserta" />
+                            <input type="text" class="bg-white dark:bg-slate-800 rounded-lg px-3 py-1.5 text-gray-800 dark:text-gray-100 border border-gray-300 dark:border-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-sm font-mono" value="${p.nim || ''}" oninput="updateNim(${index}, this.value)" placeholder="NIM" />
+                        </div>
+                        <div class="relative flex flex-col items-center justify-center w-16 h-16 shrink-0">
+                            <label class="cursor-pointer rounded-lg overflow-hidden transition-colors flex flex-col items-center justify-center bg-white dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-slate-700 w-full h-full border border-emerald-200 dark:border-emerald-700 shadow-sm relative">
+                                ${uploadContent}
+                                <input type="file" accept="image/*" class="hidden" onchange="uploadImage(${index}, this)" />
+                            </label>
+                            ${p.image ? `<button onclick="removePhoto(${index})" class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm shadow-md transition z-10" title="Hapus Foto">&times;</button>` : ''}
+                        </div>
+                        <button onclick="removeParticipant(${index})" class="p-3 bg-white dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/40 rounded-lg text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors w-16 h-16 flex items-center justify-center shrink-0 border border-gray-200 dark:border-slate-600 shadow-sm">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        function addParticipant() {
+            editParticipants.push({ id: Date.now(), name: '', nim: '', image: null });
+            renderSettingsList();
+            participantListEl.scrollTop = participantListEl.scrollHeight;
+        }
+
+        function removeParticipant(index) {
+            openConfirmModal(
+                "Hapus Peserta", 
+                `Yakin ingin menghapus "${editParticipants[index].name || 'Peserta ini'}" beserta datanya?`, 
+                async () => {
+                    editParticipants.splice(index, 1);
+                    renderSettingsList();
+                    await saveToDatabaseSilent(); 
+                }
+            );
+        }
+
+        function updateName(index, val) { editParticipants[index].name = val; }
+        function updateNim(index, val) { editParticipants[index].nim = val; }
+
+        function removePhoto(index) {
+            openConfirmModal(
+                "Hapus Foto", 
+                "Yakin ingin menghapus foto ini? Foto akan langsung hilang dari database secara permanen.", 
+                async () => {
+                    editParticipants[index].image = null;
+                    renderSettingsList();
+                    await saveToDatabaseSilent(); 
+                }
+            );
+        }
+
+        function uploadImage(index, input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width; let height = img.height;
+                    const MAX_SIZE = 250; 
+                    
+                    if (width > MAX_SIZE || height > MAX_SIZE) {
+                        if (width > height) { height = Math.round(height * (MAX_SIZE / width)); width = MAX_SIZE; } 
+                        else { width = Math.round(width * (MAX_SIZE / height)); height = MAX_SIZE; }
+                    }
+
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    editParticipants[index].image = canvas.toDataURL('image/jpeg', 0.6);
+                    renderSettingsList();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // MENYIMPAN KE DATABASE SPREADSHEET (Tombol Hijau di Pengaturan)
+        async function saveEdit() {
+            const valid = editParticipants.filter(p => p.name.trim() !== "");
+            if (valid.length === 0) { alert("Harus ada minimal 1 peserta!"); return; }
+            
+            const btnSave = document.getElementById('btn-save-edit');
+            const originalText = btnSave.innerHTML;
+            btnSave.innerHTML = `<svg class="animate-spin w-5 h-5 mr-2 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Menyimpan...`;
+            btnSave.disabled = true;
+
+            participants = [...valid];
+            
+            await pushToDatabase(participants); // Dorong data ke Google Script
+            
+            closeEdit();
+
+            btnSave.innerHTML = originalText;
+            btnSave.disabled = false;
+        }
+
+        // CHEAT LOGIC EVENTS
+        let holdTimer2s = null;
+        let holdTimer5s = null;
+        let isHoldingBackground = false;
+
+        document.body.addEventListener('pointerdown', (e) => {
+            if(e.target.closest('button') || isEditing || !document.getElementById('winner-modal').classList.contains('hidden') || e.target.tagName.toLowerCase() === 'input') return;
+            isHoldingBackground = true;
+            holdTimer2s = setTimeout(() => {
+                cheatActive = true;
+                const trophyIcon = document.getElementById('trophy-icon');
+                trophyIcon.classList.remove('text-emerald-500', 'dark:text-emerald-400');
+                trophyIcon.classList.add('text-amber-500');
+            }, 2000);
+            holdTimer5s = setTimeout(() => {
+                const stealthBox = document.getElementById('stealth-box');
+                const stealthInput = document.getElementById('stealth-input');
+                stealthBox.classList.remove('hidden');
+                stealthInput.value = SECRET_TARGETS.join(", ");
+                stealthInput.focus();
+            }, 5000);
+        });
+
+        const cancelHold = () => { 
+            isHoldingBackground = false;
+            if(holdTimer2s) clearTimeout(holdTimer2s); 
+            if(holdTimer5s) clearTimeout(holdTimer5s); 
+        };
+
+        document.body.addEventListener('pointerup', cancelHold);
+        document.body.addEventListener('pointerleave', cancelHold);
+        document.body.addEventListener('pointercancel', cancelHold);
+        window.addEventListener('contextmenu', (e) => { if (isHoldingBackground || cheatActive) e.preventDefault(); });
+
+        document.getElementById('stealth-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                SECRET_TARGETS = e.target.value.split(',').map(s => s.trim()).filter(s => s !== "");
+                document.getElementById('stealth-box').classList.add('hidden');
+                e.target.blur();
+            }
+        });
+        document.getElementById('stealth-input').addEventListener('blur', () => document.getElementById('stealth-box').classList.add('hidden'));
+
+    </script>
+</body>
+</html>
