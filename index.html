@@ -92,10 +92,10 @@
     </div>
 
     <!-- Main Area -->
-    <main class="flex-grow flex flex-col items-center justify-center p-4 overflow-hidden relative z-10 w-full">
+    <main class="flex-grow flex flex-col items-center justify-center p-2 md:p-4 overflow-hidden relative z-10 w-full">
         
         <!-- Loading State -->
-        <div id="loading-view" class="w-full max-w-lg xl:max-w-3xl flex flex-col items-center justify-center py-20">
+        <div id="loading-view" class="w-full max-w-lg xl:max-w-3xl flex flex-col items-center justify-center py-10 md:py-20">
             <svg class="animate-spin h-10 w-10 md:h-14 md:w-14 xl:h-20 xl:w-20 text-emerald-500 mb-4 xl:mb-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -104,10 +104,10 @@
         </div>
 
         <!-- TAMPILAN IDLE / GRID SPIN (Responsif adaptif) -->
-        <div id="grid-view" class="hidden w-full transition-all duration-300 flex flex-col items-center justify-center pt-6 xl:pt-12 pb-2 relative">
+        <div id="grid-view" class="hidden w-full transition-all duration-300 flex flex-col items-center justify-center pt-2 md:pt-6 xl:pt-12 pb-2 relative">
 
-            <p id="grid-title" class="text-emerald-600 dark:text-emerald-500 font-bold mb-4 xl:mb-8 text-xs sm:text-sm md:text-base xl:text-2xl tracking-[0.2em] uppercase animate-pulse">Mari Tentukan Pilihan</p>
-            <div id="grid-container" class="flex overflow-x-auto gap-4 sm:gap-6 md:gap-8 lg:gap-12 xl:gap-16 w-full max-w-full px-8 pb-10 xl:pb-16 pt-4 xl:pt-8 hide-scrollbar snap-x snap-mandatory items-start cursor-grab" style="scroll-behavior: smooth;">
+            <p id="grid-title" class="text-emerald-600 dark:text-emerald-500 font-bold mb-2 md:mb-4 xl:mb-8 text-xs sm:text-sm md:text-base xl:text-2xl tracking-[0.2em] uppercase animate-pulse">Mari Tentukan Pilihan</p>
+            <div id="grid-container" class="flex overflow-x-auto gap-4 sm:gap-6 md:gap-8 lg:gap-12 xl:gap-16 w-full max-w-full px-8 pb-4 pt-2 md:pb-10 md:pt-4 xl:pb-16 xl:pt-8 hide-scrollbar snap-x snap-mandatory items-start cursor-grab" style="scroll-behavior: smooth;">
                 <!-- Kartu peserta akan digenerate disini memanjang ke samping -->
             </div>
         </div>
@@ -138,9 +138,9 @@
     </main>
 
     <!-- Bottom Bar (Tombol Mulai yang adaptif) -->
-    <div id="bottom-bar" class="hidden p-6 xl:p-10 pb-8 xl:pb-14 relative z-10 w-full flex justify-center">
-        <button id="btn-start" onclick="startSpin()" class="w-full max-w-lg md:max-w-2xl xl:max-w-4xl flex items-center justify-center gap-3 xl:gap-6 py-4 md:py-5 xl:py-7 rounded-full text-2xl md:text-3xl xl:text-5xl font-black tracking-widest uppercase transition-all duration-200 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)] active:scale-95 border border-emerald-400/50 disabled:opacity-50 disabled:cursor-not-allowed">
-            <svg id="icon-play" class="w-7 h-7 md:w-9 md:h-9 xl:w-14 xl:h-14 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    <div id="bottom-bar" class="hidden p-4 pb-6 md:p-6 xl:p-10 xl:pb-14 relative z-10 w-full flex justify-center">
+        <button id="btn-start" onclick="startSpin()" class="w-full max-w-lg md:max-w-2xl xl:max-w-4xl flex items-center justify-center gap-2 xl:gap-6 py-3 md:py-5 xl:py-7 rounded-full text-xl md:text-3xl xl:text-5xl font-black tracking-widest uppercase transition-all duration-200 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)] active:scale-95 border border-emerald-400/50 disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg id="icon-play" class="w-6 h-6 md:w-9 md:h-9 xl:w-14 xl:h-14 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             <span id="text-start">Memulai</span>
         </button>
     </div>
@@ -363,7 +363,7 @@
         function lockSpinUI() {
             btnStart.disabled = true; 
             btnSettings.disabled = true;
-            btnStart.className = "w-full max-w-lg md:max-w-2xl xl:max-w-4xl flex items-center justify-center gap-3 xl:gap-6 py-4 md:py-5 xl:py-7 rounded-full text-2xl md:text-3xl xl:text-5xl font-black tracking-widest uppercase transition-all duration-200 bg-gray-300 dark:bg-slate-700 text-gray-500 dark:text-slate-500 cursor-not-allowed scale-95";
+            btnStart.className = "w-full max-w-lg md:max-w-2xl xl:max-w-4xl flex items-center justify-center gap-2 xl:gap-6 py-3 md:py-5 xl:py-7 rounded-full text-xl md:text-3xl xl:text-5xl font-black tracking-widest uppercase transition-all duration-200 bg-gray-300 dark:bg-slate-700 text-gray-500 dark:text-slate-500 cursor-not-allowed scale-95";
             textStart.innerText = "Memutar...";
             iconPlay.classList.add('hidden');
         }
@@ -371,7 +371,7 @@
         function resetSpinUI() {
             btnStart.disabled = false; 
             btnSettings.disabled = false;
-            btnStart.className = "w-full max-w-lg md:max-w-2xl xl:max-w-4xl flex items-center justify-center gap-3 xl:gap-6 py-4 md:py-5 xl:py-7 rounded-full text-2xl md:text-3xl xl:text-5xl font-black tracking-widest uppercase transition-all duration-200 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)] active:scale-95 border border-emerald-400/50";
+            btnStart.className = "w-full max-w-lg md:max-w-2xl xl:max-w-4xl flex items-center justify-center gap-2 xl:gap-6 py-3 md:py-5 xl:py-7 rounded-full text-xl md:text-3xl xl:text-5xl font-black tracking-widest uppercase transition-all duration-200 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)] active:scale-95 border border-emerald-400/50";
             textStart.innerText = "Memulai"; 
             iconPlay.classList.remove('hidden');
         }
@@ -838,8 +838,7 @@
         }
 
         // CHEAT LOGIC EVENTS
-        let holdTimer2s = null;
-        let holdTimer8s = null; // Diubah jadi 8 detik
+        let holdTimer8s = null; // Diubah jadi 8 detik tanpa ada penanda warna di detik ke-2
         let isHoldingBackground = false;
         let startX = 0;
         let startY = 0;
@@ -857,15 +856,9 @@
             startX = e.clientX;
             startY = e.clientY;
 
-            holdTimer2s = setTimeout(() => {
-                cheatActive = true;
-                const trophyIcon = document.getElementById('trophy-icon');
-                trophyIcon.classList.remove('text-emerald-500', 'dark:text-emerald-400');
-                trophyIcon.classList.add('text-amber-500');
-            }, 2000); // Ikon berubah warna setelah 2 detik sebagai penanda
-
-            // Diubah menjadi 8000ms (8 Detik) sesuai permintaan
+            // Timer berjalan murni 8 Detik tanpa perubahan antarmuka apa pun di tengah waktu
             holdTimer8s = setTimeout(() => {
+                cheatActive = true;
                 const stealthBox = document.getElementById('stealth-box');
                 const stealthInput = document.getElementById('stealth-input');
                 stealthBox.classList.remove('hidden');
@@ -876,7 +869,6 @@
 
         const cancelHold = () => { 
             isHoldingBackground = false;
-            if(holdTimer2s) clearTimeout(holdTimer2s); 
             if(holdTimer8s) clearTimeout(holdTimer8s); 
         };
 
