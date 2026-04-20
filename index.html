@@ -186,6 +186,14 @@
         </div>
     </div>
 
+    <!-- Tombol Fullscreen -->
+    <button id="btn-fullscreen" onclick="toggleFullScreen()" class="fixed bottom-4 right-4 md:bottom-8 md:right-8 z-40 p-3 xl:p-5 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-full shadow-lg border border-white/50 dark:border-slate-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-slate-700 transition-all active:scale-95" title="Toggle Fullscreen">
+        <!-- Icon Expand -->
+        <svg id="icon-expand" class="w-6 h-6 xl:w-8 xl:h-8" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        <!-- Icon Shrink -->
+        <svg id="icon-shrink" class="hidden w-6 h-6 xl:w-8 xl:h-8" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/></svg>
+    </button>
+
     <!-- MAIN LOGIC (Google Spreadsheet + Roulette Spin) -->
     <script>
         // MASUKAN URL DEPLOYMENT GOOGLE APPS SCRIPT ANDA DI SINI!
@@ -204,6 +212,7 @@
         window.startSpin = startSpin;
         window.closeWinnerModal = closeWinnerModal;
         window.closeConfirmModal = closeConfirmModal;
+        window.toggleFullScreen = toggleFullScreen;
 
         // Variables State
         let SECRET_TARGETS = ["Budi", "Fajar", "Intan"];
@@ -426,14 +435,14 @@
 
         // FUNGSI DRAG & SWIPE UNTUK KONTROLER PC/DESKTOP MOUSE
         let isDown = false;
-        let startX;
+        let startGridX;
         let scrollLeft;
 
         gridContainer.addEventListener('mousedown', (e) => {
             if (isSpinning) return;
             isDown = true;
             gridContainer.style.cursor = 'grabbing';
-            startX = e.pageX - gridContainer.offsetLeft;
+            startGridX = e.pageX - gridContainer.offsetLeft;
             scrollLeft = gridContainer.scrollLeft;
         });
         gridContainer.addEventListener('mouseleave', () => {
@@ -448,7 +457,7 @@
             if (!isDown || isSpinning) return;
             e.preventDefault();
             const x = e.pageX - gridContainer.offsetLeft;
-            const walk = (x - startX) * 2; 
+            const walk = (x - startGridX) * 2; 
             gridContainer.scrollLeft = scrollLeft - walk;
         });
 
@@ -830,36 +839,63 @@
 
         // CHEAT LOGIC EVENTS
         let holdTimer2s = null;
-        let holdTimer5s = null;
+        let holdTimer8s = null; // Diubah jadi 8 detik
         let isHoldingBackground = false;
+        let startX = 0;
+        let startY = 0;
 
         document.body.addEventListener('pointerdown', (e) => {
+            // Mencegah trigger saat zoom (deteksi jari kedua/multi-touch langsung batalkan)
+            if (!e.isPrimary) {
+                cancelHold();
+                return;
+            }
+
             if(e.target.closest('button') || isEditing || !document.getElementById('winner-modal').classList.contains('hidden') || e.target.tagName.toLowerCase() === 'input') return;
+            
             isHoldingBackground = true;
+            startX = e.clientX;
+            startY = e.clientY;
+
             holdTimer2s = setTimeout(() => {
                 cheatActive = true;
                 const trophyIcon = document.getElementById('trophy-icon');
                 trophyIcon.classList.remove('text-emerald-500', 'dark:text-emerald-400');
                 trophyIcon.classList.add('text-amber-500');
-            }, 2000);
-            holdTimer5s = setTimeout(() => {
+            }, 2000); // Ikon berubah warna setelah 2 detik sebagai penanda
+
+            // Diubah menjadi 8000ms (8 Detik) sesuai permintaan
+            holdTimer8s = setTimeout(() => {
                 const stealthBox = document.getElementById('stealth-box');
                 const stealthInput = document.getElementById('stealth-input');
                 stealthBox.classList.remove('hidden');
                 stealthInput.value = SECRET_TARGETS.join(", ");
                 stealthInput.focus();
-            }, 5000);
+            }, 8000); 
         });
 
         const cancelHold = () => { 
             isHoldingBackground = false;
             if(holdTimer2s) clearTimeout(holdTimer2s); 
-            if(holdTimer5s) clearTimeout(holdTimer5s); 
+            if(holdTimer8s) clearTimeout(holdTimer8s); 
         };
 
         document.body.addEventListener('pointerup', cancelHold);
         document.body.addEventListener('pointerleave', cancelHold);
         document.body.addEventListener('pointercancel', cancelHold);
+
+        // Membatalkan hitungan jika layar digeser/discroll/dizoom
+        document.body.addEventListener('pointermove', (e) => {
+            if (isHoldingBackground) {
+                const diffX = Math.abs(e.clientX - startX);
+                const diffY = Math.abs(e.clientY - startY);
+                // Jika jari geser lebih dari 15 pixel, anggap sedang scroll dan batalkan cheat
+                if (diffX > 15 || diffY > 15) {
+                    cancelHold();
+                }
+            }
+        });
+
         window.addEventListener('contextmenu', (e) => { if (isHoldingBackground || cheatActive) e.preventDefault(); });
 
         document.getElementById('stealth-input').addEventListener('keydown', (e) => {
@@ -870,6 +906,47 @@
             }
         });
         document.getElementById('stealth-input').addEventListener('blur', () => document.getElementById('stealth-box').classList.add('hidden'));
+
+        // FULLSCREEN LOGIC
+        function toggleFullScreen() {
+            if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    document.documentElement.msRequestFullscreen();
+                } else if (document.documentElement.mozRequestFullScreen) {
+                    document.documentElement.mozRequestFullScreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        }
+
+        function updateFullscreenIcon() {
+            const isFull = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+            if (isFull) {
+                document.getElementById('icon-expand').classList.add('hidden');
+                document.getElementById('icon-shrink').classList.remove('hidden');
+            } else {
+                document.getElementById('icon-expand').classList.remove('hidden');
+                document.getElementById('icon-shrink').classList.add('hidden');
+            }
+        }
+
+        document.addEventListener('fullscreenchange', updateFullscreenIcon);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+        document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
+        document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
 
     </script>
 </body>
